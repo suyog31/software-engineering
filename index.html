@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumen — Smart Street Lighting System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="screen-login">
+  <div class="login-card">
+    <div class="login-brand"><span class="dot"></span><span>LUMEN</span></div>
+    <p class="login-sub">Smart Street Lighting System — municipal control &amp; maintenance console.</p>
+    <label>Sign in as</label>
+    <div class="role-picker">
+      <button class="role-btn active" data-role="admin">Admin</button>
+      <button class="role-btn" data-role="maintenance">Maintenance Staff</button>
+    </div>
+    <label for="li-user">Username</label>
+    <input id="li-user" type="text" value="admin" placeholder="Username">
+    <label for="li-pass">Password</label>
+    <input id="li-pass" type="password" value="••••••••" placeholder="Password">
+    <button class="btn-primary" id="btn-login">Log in</button>
+    <p class="login-note">Demo build — any credentials are accepted.</p>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+<div class="shell">
+  <div class="sidebar">
+    <div class="brand"><span class="dot"></span><span>LUMEN</span></div>
+    <div class="navgroup" id="nav-container"></div>
+    <div class="sidebar-foot">
+      <div class="who">
+        <div class="avatar" id="who-initial">A</div>
+        <div><span id="who-name" style="font-size:.85rem;font-weight:600;">Admin</span><small id="who-role">Administrator</small></div>
+      </div>
+      <button class="logout" id="btn-logout">Log out</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="page-title">Overview</h1>
+        <p id="page-sub">Real-time status of the city lighting network.</p>
+      </div>
+      <div class="clock-widget">
+        <div class="clock-row"><span class="time" id="clock-time">18:00</span><span class="phase" id="clock-phase">Dusk · lights on</span></div>
+        <input type="range" id="clock-slider" min="0" max="1439" value="1080">
+        <div class="clock-controls">
+          <button class="play-btn" id="btn-play">▶ Simulate day cycle</button>
+          <span style="font-size:.7rem;color:var(--fog);">City clock — drives daylight sensor &amp; schedules</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- OVERVIEW / MONITOR (R2, R9, R10, R8) -->
+    <section class="section" id="tab-overview">
+      <div class="grid-3">
+        <div class="stat on"><div class="n" id="stat-on">0</div><div class="l">Lights on</div></div>
+        <div class="stat fault"><div class="n" id="stat-fault">0</div><div class="l">Faults reported</div></div>
+        <div class="stat energy"><div class="n" id="stat-energy">0.0 kWh</div><div class="l">Grid draw right now</div></div>
+      </div>
+      <div class="panel">
+        <h2>Live network map</h2>
+        <p class="hint">Click a pole to inspect and control it. Amber = on, dim grey = off, red pulse = fault detected.</p>
+        <div class="city" id="city-map"></div>
+        <div class="legend">
+          <span><i style="background:var(--sodium)"></i>On</span>
+          <span><i style="background:#2a3550"></i>Off</span>
+          <span><i style="background:var(--fault)"></i>Fault</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIGHTS / CONTROL (R3, R4) -->
+    <section class="section" id="tab-lights">
+      <div class="two-col">
+        <div class="panel">
+          <h2>Street lights</h2>
+          <p class="hint">Turn individual lights on/off and set brightness. Manual overrides pause automatic daylight control until reset.</p>
+          <table>
+            <thead><tr><th>ID</th><th>Zone</th><th>Status</th><th>Brightness</th><th>Mode</th><th></th></tr></thead>
+            <tbody id="lights-tbody"></tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <h2>Control panel</h2>
+          <div id="light-detail"><p class="detail-empty">Select a light from the map or table to control it.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCHEDULE (R7) -->
+    <section class="section" id="tab-schedule">
+      <div class="panel">
+        <h2>Schedule lighting operations</h2>
+        <p class="hint">Set default on/off times per zone. The daylight sensor can still override these near sunrise/sunset.</p>
+        <div id="schedule-list"></div>
+      </div>
+    </section>
+
+    <!-- MAINTENANCE ALERTS + ASSIGNMENT (R6, R15) — admin -->
+    <section class="section" id="tab-maintenance">
+      <div class="two-col">
+        <div class="panel">
+          <h2>Fault alerts</h2>
+          <p class="hint">The system notifies this feed the moment a fault is detected.</p>
+          <div id="alert-feed"></div>
+        </div>
+        <div class="panel">
+          <h2>Assign maintenance task <span class="badge pending" id="assign-count">0</span></h2>
+          <p class="hint">Send an open fault to a maintenance staff member.</p>
+          <div id="assign-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REPORTS + ENERGY (R5, R10) -->
+    <section class="section" id="tab-reports">
+      <div class="panel">
+        <h2>Energy consumption</h2>
+        <p class="hint">Simulated grid draw across the network, sampled every tick of the city clock.</p>
+        <canvas id="energy-chart"></canvas>
+      </div>
+      <div class="panel">
+        <h2>Generate report</h2>
+        <p class="hint">Compiles current energy and maintenance statistics.</p>
+        <button class="mini-btn" id="btn-generate-report">Generate report</button>
+        <div id="report-output" style="margin-top:16px;"></div>
+      </div>
+    </section>
+
+    <!-- MAINTENANCE STAFF: TASKS (R11) -->
+    <section class="section" id="tab-tasks">
+      <div class="panel">
+        <h2>Maintenance status</h2>
+        <div class="tabs" id="task-tabs">
+          <button class="tab-btn active" data-status="pending">Pending</button>
+          <button class="tab-btn" data-status="ongoing">Ongoing</button>
+          <button class="tab-btn" data-status="completed">Completed</button>
+        </div>
+        <table>
+          <thead><tr><th>Task</th><th>Light</th><th>Zone</th><th>Reported</th><th>Status</th><th></th></tr></thead>
+          <tbody id="tasks-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- FAULT LOCATION (R13) -->
+    <section class="section" id="tab-faultmap">
+      <div class="panel">
+        <h2>Fault locations</h2>
+        <p class="hint">Only lights currently reporting a fault are shown below.</p>
+        <div class="city" id="fault-map"></div>
+      </div>
+    </section>
+
+    <!-- UPDATE REPAIR (part of tasks tbody actions) -->
+    <section class="section" id="tab-updaterepair">
+      <div class="panel">
+        <h2>Update repair status</h2>
+        <div id="repair-form"><p class="detail-empty">Choose "Update" on a task from Maintenance Status to log repair work here.</p></div>
+      </div>
+    </section>
+
+    <!-- HISTORY (R14) -->
+    <section class="section" id="tab-history">
+      <div class="panel">
+        <h2>Maintenance history</h2>
+        <table>
+          <thead><tr><th>Task</th><th>Light</th><th>Resolved</th><th>Remarks</th></tr></thead>
+          <tbody id="history-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PROFILE -->
+    <section class="section" id="tab-profile">
+      <div class="panel" style="max-width:480px;">
+        <h2>My profile</h2>
+        <label>Full name</label><input type="text" id="pf-name" value="">
+        <label>Email</label><input type="text" id="pf-email" value="">
+        <label>Phone number</label><input type="text" id="pf-phone" value="">
+        <button class="mini-btn" id="btn-save-profile" style="margin-top:16px;">Save changes</button>
+        <p id="pf-saved" class="hint" style="display:none;color:var(--cyan);margin-top:10px;">Profile updated.</p>
+      </div>
+    </section>
+
+  </div>
+</div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
