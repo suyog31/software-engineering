@@ -21,28 +21,6 @@ The project has two parts:
 - 📊 **Report generation** — on-demand snapshot of network and maintenance statistics
 - 👤 **Role-based access** — separate Admin and Maintenance Staff views, with login and profile self-service
 
-## Screenshots
-
-> Place these image files in a `screenshots/` folder at the root of your repo (same names as below) so the links render on GitHub.
-
-**Login — Admin**
-![Admin login](screenshots/login-admin.png)
-
-**Login — Maintenance Staff**
-![Maintenance Staff login](screenshots/login-maintenance.png)
-
-**Overview — live network map & stats**
-![Overview dashboard](screenshots/overview.png)
-
-**Schedule — per-zone on/off windows**
-![Schedule configuration](screenshots/schedule.png)
-
-**Maintenance Status — staff task queue**
-![Maintenance status](screenshots/maintenance-status.png)
-
-**Profile — account self-service**
-![Profile page](screenshots/profile.png)
-
 ## Project structure
 
 ```
